@@ -219,3 +219,25 @@ Contributions welcome! Please open an issue or PR.
 ---
 
 Built with FastAPI, OpenAI, and vanilla JavaScript.
+
+## Screenshots
+
+- Landing Page
+
+![Landing Page](app.png)
+
+- Architecture (Scalable Audio Streaming on AWS)
+
+![Architecture](arch.png)
+
+## Scenario: Scalable Audio Streaming on AWS
+
+This architecture demonstrates a scalable audio streaming platform deployed on AWS, generated via the agentic flow:
+- API and Ingestion Tier with global access and CDN
+- Stream processing for transcoding and packaging
+- Storage layers (hot/cold) with lifecycle policies
+- Playback and session control
+- Monitoring, logging, and tracing across the stack
+- Security boundaries for public/private subnets, IAM, and encrypted data flows
+
+The diagram was produced by the iterative plan → synthesize → validate → refine loop.
