@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ArchGen - Multi-Agent Architecture Studio</title>
+  <style>
+    :root {
+      --bg-dark: #0a0e17;
+      --bg-card: #131a2b;
+      --bg-hover: #1a2337;
+      --border: #1e2a3f;
+      --text: #e2e8f0;
+      --text-dim: #64748b;
+      --text-muted: #475569;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --chief: #8b5cf6;
+      --alpha: #3b82f6;
+      --beta: #10b981;
+      --gamma: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(180deg, #131a2b 0%, var(--bg-dark) 100%);
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .logo h1 {
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo p {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-dim);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .mode-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Main Layout */
+    .main {
+      display: grid;
+      grid-template-columns: 380px 1fr 420px;
+      height: calc(100vh - 85px);
+    }
+
+    .panel {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel:last-child {
+      border-right: none;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    /* Input Panel */
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      transition: all 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+      color: white;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px var(--accent-glow);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Viewer */
+    .viewer {
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .viewer-placeholder {
+      text-align: center;
+      color: #94a3b8;
+    }
+
+    .viewer-placeholder .icon {
+      font-size: 80px;
+      opacity: 0.2;
+      margin-bottom: 16px;
+    }
+
+    /* Agent Panel */
+    .agent-panel {
+      background: var(--bg-dark);
+    }
+
+    /* Team Section */
+    .team-section {
+      margin-bottom: 24px;
+    }
+
+    .team-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Agent Cards */
+    .agent-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.3s;
+    }
+
+    .agent-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .agent-card.winner {
+      border-color: var(--success);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    }
+
+    .agent-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .agent-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .agent-avatar.chief { background: linear-gradient(135deg, var(--chief) 0%, #a855f7 100%); }
+    .agent-avatar.alpha { background: linear-gradient(135deg, var(--alpha) 0%, #0ea5e9 100%); }
+    .agent-avatar.beta { background: linear-gradient(135deg, var(--beta) 0%, #14b8a6 100%); }
+    .agent-avatar.gamma { background: linear-gradient(135deg, var(--gamma) 0%, #f97316 100%); }
+
+    .agent-info h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .agent-info p {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .agent-status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-dot.active {
+      background: var(--accent);
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-dot.done {
+      background: var(--success);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    .agent-body {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* Score Badge */
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--bg-hover);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .score-badge.high {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    /* Phase Indicator */
+    .phase-indicator {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .phase-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .phase-title .icon {
+      font-size: 18px;
+    }
+
+    .phase-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Progress Steps */
+    .progress-steps {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .progress-step {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-step.complete {
+      background: var(--success);
+    }
+
+    .progress-step.active {
+      background: linear-gradient(90deg, var(--accent) 0%, var(--border) 100%);
+      animation: progress 1.5s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+      0% { background-position: -100% 0; }
+      100% { background-position: 100% 0; }
+    }
+
+    /* Review Card */
+    .review-card {
+      background: var(--bg-hover);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 11px;
+    }
+
+    .review-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .review-score {
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .review-points {
+      color: var(--text-dim);
+    }
+
+    .review-points span {
+      display: block;
+      margin: 2px 0;
+    }
+
+    .review-points .strength { color: var(--success); }
+    .review-points .weakness { color: var(--warning); }
+
+    /* Proposals Grid */
+    .proposals-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .proposal-mini {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .proposal-mini:hover {
+      border-color: var(--accent);
+    }
+
+    .proposal-mini.selected {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.05);
+    }
+
+    .proposal-mini h5 {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .proposal-mini p {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-secondary {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-hover);
+      border-color: var(--text-muted);
+    }
+
+    /* Winner Banner */
+    .winner-banner {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+      border: 1px solid var(--success);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .winner-banner .trophy {
+      font-size: 32px;
+    }
+
+    .winner-banner h3 {
+      font-size: 16px;
+      color: var(--success);
+    }
+
+    .winner-banner p {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">&#x1F3D7;</div>
+      <div>
+        <h1>ArchGen Studio</h1>
+        <p>Multi-Agent Architecture Design</p>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="singleMode">Single Agent</button>
+      <button class="mode-btn active" id="multiMode">Team Mode</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Input Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>&#x1F4DD;</span> Design Brief
+      </div>
+      <div class="panel-content">
+        <div class="input-group">
+          <label class="input-label">Architecture Goal</label>
+          <textarea id="prompt" placeholder="Describe your architecture...&#10;&#10;Example: Design an e-commerce platform with microservices, real-time inventory, payment processing, and global CDN deployment on AWS"></textarea>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Context & Constraints</label>
+          <textarea id="context" style="min-height: 80px;" placeholder="Requirements, budget, team size, existing systems..."></textarea>
+        </div>
+
+        <button id="generate" class="btn btn-primary">
+          <span>&#x1F680;</span>
+          Launch Architecture Team
+        </button>
+
+        <div class="actions">
+          <button id="download" class="btn btn-secondary" disabled>
+            <span>&#x2B07;</span> Download
+          </button>
+          <button id="compare" class="btn btn-secondary" disabled>
+            <span>&#x1F50D;</span> Compare All
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Viewer -->
+    <div class="panel viewer" id="viewer">
+      <div class="viewer-placeholder">
+        <div class="icon">&#x1F5BC;</div>
+        <h3>Architecture Diagram</h3>
+        <p>Your team-designed architecture will appear here</p>
+      </div>
+    </div>
+
+    <!-- Agent Panel -->
+    <div class="panel agent-panel">
+      <div class="panel-header">
+        <span>&#x1F465;</span> Architecture Team
+      </div>
+      <div class="panel-content" id="agentContent">
+        <!-- Progress Steps -->
+        <div class="progress-steps" id="progressSteps">
+          <div class="progress-step" data-step="criteria"></div>
+          <div class="progress-step" data-step="design"></div>
+          <div class="progress-step" data-step="review"></div>
+          <div class="progress-step" data-step="scoring"></div>
+          <div class="progress-step" data-step="refine"></div>
+        </div>
+
+        <!-- Phase Indicator -->
+        <div class="phase-indicator" id="phaseIndicator" style="display:none;">
+          <div class="phase-title">
+            <span class="icon" id="phaseIcon">&#x23F3;</span>
+            <span id="phaseTitle">Initializing...</span>
+          </div>
+          <div class="phase-desc" id="phaseDesc"></div>
+        </div>
+
+        <!-- Team Section -->
+        <div class="team-section">
+          <div class="team-header">
+            <span>&#x1F451;</span> Leadership
+          </div>
+
+          <div class="agent-card" id="chiefCard">
+            <div class="agent-header">
+              <div class="agent-avatar chief">C</div>
+              <div class="agent-info">
+                <h4>Chief Architect</h4>
+                <p>Reviews, scores, selects best design</p>
+              </div>
+              <div class="agent-status">
+                <div class="status-dot" id="chiefStatus"></div>
+              </div>
+            </div>
+            <div class="agent-body" id="chiefBody">
+              Waiting to define evaluation criteria...
+            </div>
+          </div>
+        </div>
+
+        <div class="team-section">
+          <div class="team-header">
+            <span>&#x1F477;</span> Architecture Team
+          </div>
+
+          <div class="agent-card" id="alphaCard">
+            <div class="agent-header">
+              <div class="agent-avatar alpha">A</div>
+              <div class="agent-info">
+                <h4>Architect Alpha</h4>
+                <p>Cloud-native specialist</p>
+              </div>
+              <div class="agent-status">
+                <div class="status-dot" id="alphaStatus"></div>
+              </div>
+            </div>
+            <div class="agent-body" id="alphaBody">Ready</div>
+          </div>
+
+          <div class="agent-card" id="betaCard">
+            <div class="agent-header">
+              <div class="agent-avatar beta">B</div>
+              <div class="agent-info">
+                <h4>Architect Beta</h4>
+                <p>Security & integration expert</p>
+              </div>
+              <div class="agent-status">
+                <div class="status-dot" id="betaStatus"></div>
+              </div>
+            </div>
+            <div class="agent-body" id="betaBody">Ready</div>
+          </div>
+
+          <div class="agent-card" id="gammaCard">
+            <div class="agent-header">
+              <div class="agent-avatar gamma">G</div>
+              <div class="agent-info">
+                <h4>Architect Gamma</h4>
+                <p>Pragmatic full-stack focus</p>
+              </div>
+              <div class="agent-status">
+                <div class="status-dot" id="gammaStatus"></div>
+              </div>
+            </div>
+            <div class="agent-body" id="gammaBody">Ready</div>
+          </div>
+        </div>
+
+        <!-- Winner Banner (hidden initially) -->
+        <div class="winner-banner" id="winnerBanner" style="display:none;">
+          <div class="trophy">&#x1F3C6;</div>
+          <div>
+            <h3 id="winnerName">Winner: Architect Beta</h3>
+            <p id="winnerReason">Selected for superior security design</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const generateBtn = document.getElementById('generate');
+    const downloadBtn = document.getElementById('download');
+    const compareBtn = document.getElementById('compare');
+    const viewer = document.getElementById('viewer');
+    const phaseIndicator = document.getElementById('phaseIndicator');
+    const progressSteps = document.getElementById('progressSteps');
+    const winnerBanner = document.getElementById('winnerBanner');
+
+    let latestXML = '';
+    let allProposals = [];
+    let isMultiMode = true;
+
+    // Mode toggle
+    document.getElementById('singleMode').addEventListener('click', () => {
+      isMultiMode = false;
+      document.getElementById('singleMode').classList.add('active');
+      document.getElementById('multiMode').classList.remove('active');
+      generateBtn.innerHTML = '<span>&#x26A1;</span> Generate Architecture';
+    });
+
+    document.getElementById('multiMode').addEventListener('click', () => {
+      isMultiMode = true;
+      document.getElementById('multiMode').classList.add('active');
+      document.getElementById('singleMode').classList.remove('active');
+      generateBtn.innerHTML = '<span>&#x1F680;</span> Launch Architecture Team';
+    });
+
+    function resetUI() {
+      // Reset progress
+      document.querySelectorAll('.progress-step').forEach(s => {
+        s.classList.remove('complete', 'active');
+      });
+
+      // Reset agent cards
+      ['chief', 'alpha', 'beta', 'gamma'].forEach(id => {
+        document.getElementById(`${id}Status`).className = 'status-dot';
+        document.getElementById(`${id}Card`).classList.remove('active', 'winner');
+      });
+
+      document.getElementById('chiefBody').textContent = 'Waiting...';
+      document.getElementById('alphaBody').textContent = 'Ready';
+      document.getElementById('betaBody').textContent = 'Ready';
+      document.getElementById('gammaBody').textContent = 'Ready';
+
+      winnerBanner.style.display = 'none';
+      phaseIndicator.style.display = 'none';
+    }
+
+    function setPhase(icon, title, desc) {
+      phaseIndicator.style.display = 'block';
+      document.getElementById('phaseIcon').innerHTML = icon;
+      document.getElementById('phaseTitle').textContent = title;
+      document.getElementById('phaseDesc').textContent = desc;
+    }
+
+    function setProgress(step) {
+      const steps = ['criteria', 'design', 'review', 'scoring', 'refine'];
+      const idx = steps.indexOf(step);
+      document.querySelectorAll('.progress-step').forEach((el, i) => {
+        el.classList.remove('complete', 'active');
+        if (i < idx) el.classList.add('complete');
+        if (i === idx) el.classList.add('active');
+      });
+    }
+
+    function setAgentActive(id) {
+      document.getElementById(`${id}Status`).className = 'status-dot active';
+      document.getElementById(`${id}Card`).classList.add('active');
+    }
+
+    function setAgentDone(id, message) {
+      document.getElementById(`${id}Status`).className = 'status-dot done';
+      document.getElementById(`${id}Card`).classList.remove('active');
+      if (message) document.getElementById(`${id}Body`).innerHTML = message;
+    }
+
+    async function renderDiagram(xml) {
+      latestXML = xml;
+      try {
+        const res = await fetch('/api/export', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ xml, format: 'svg', scale: 1 })
+        });
+        const data = await res.json();
+        if (data.svg) {
+          viewer.innerHTML = data.svg;
+        }
+      } catch (e) {
+        viewer.innerHTML = `<div class="viewer-placeholder"><p>Render error: ${e.message}</p></div>`;
+      }
+    }
+
+    // Main generation
+    generateBtn.addEventListener('click', async () => {
+      const prompt = document.getElementById('prompt').value.trim();
+      const context = document.getElementById('context').value.trim();
+
+      if (!prompt) {
+        alert('Please enter an architecture goal');
+        return;
+      }
+
+      generateBtn.disabled = true;
+      downloadBtn.disabled = true;
+      compareBtn.disabled = true;
+      resetUI();
+
+      viewer.innerHTML = '<div class="viewer-placeholder"><div class="spinner"></div><p>Team is working...</p></div>';
+
+      const endpoint = isMultiMode ? '/api/multi_agent_stream' : '/api/generate_stream';
+
+      try {
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ prompt, context: context || null, max_iters: 3 })
+        });
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const {value, done} = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, {stream: true});
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop() || '';
+
+          for (const chunk of parts) {
+            if (!chunk.startsWith('data: ')) continue;
+
+            try {
+              const evt = JSON.parse(chunk.slice(6));
+              handleEvent(evt);
+            } catch (e) {
+              console.error('Parse error:', e);
+            }
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        alert('Error: ' + e.message);
+      } finally {
+        generateBtn.disabled = false;
+      }
+    });
+
+    function handleEvent(evt) {
+      switch (evt.type) {
+        case 'phase':
+          handlePhase(evt);
+          break;
+
+        case 'criteria':
+          setAgentDone('chief', `Defined ${evt.data?.evaluation_criteria?.length || 0} criteria`);
+          setProgress('design');
+          break;
+
+        case 'architect_start':
+          setAgentActive(evt.architect.toLowerCase());
+          setPhase('&#x1F4DD;', `${evt.architect} Designing`, evt.message);
+          break;
+
+        case 'architect_done':
+          setAgentDone(evt.architect.toLowerCase(),
+            `${evt.proposal.nodes} components, ${evt.proposal.edges} connections<br>
+            <small style="color:var(--text-muted)">${evt.proposal.rationale?.slice(0, 80)}...</small>`);
+          break;
+
+        case 'review_start':
+          setPhase('&#x1F50D;', 'Peer Review', `${evt.reviewer} reviewing ${evt.target}'s design`);
+          break;
+
+        case 'review_done':
+          const card = document.getElementById(`${evt.target.toLowerCase()}Body`);
+          card.innerHTML += `<div class="review-card">
+            <div class="review-header">
+              <span>Review by ${evt.reviewer}</span>
+              <span class="review-score">${evt.score}/10</span>
+            </div>
+            <div class="review-points">
+              ${evt.strengths?.map(s => `<span class="strength">+ ${s}</span>`).join('') || ''}
+              ${evt.weaknesses?.map(w => `<span class="weakness">- ${w}</span>`).join('') || ''}
+            </div>
+          </div>`;
+          break;
+
+        case 'scores':
+          setProgress('scoring');
+          setPhase('&#x1F3C6;', 'Scoring Complete', `Winner: Architect ${evt.winner}`);
+
+          // Show scores on cards
+          Object.entries(evt.data || {}).forEach(([id, scoreData]) => {
+            const body = document.getElementById(`${id.toLowerCase()}Body`);
+            const total = scoreData.total || 0;
+            body.innerHTML += `<div class="score-badge ${total > 7 ? 'high' : ''}">
+              Score: ${total.toFixed(1)}/10
+            </div>`;
+          });
+
+          // Mark winner
+          if (evt.winner) {
+            document.getElementById(`${evt.winner.toLowerCase()}Card`).classList.add('winner');
+          }
+          break;
+
+        case 'refinement_done':
+          setProgress('refine');
+          break;
+
+        case 'final':
+          setPhase('&#x2705;', 'Complete!', 'Architecture design finished');
+
+          // Complete all progress
+          document.querySelectorAll('.progress-step').forEach(s => {
+            s.classList.remove('active');
+            s.classList.add('complete');
+          });
+
+          // Show winner banner
+          if (evt.winner) {
+            winnerBanner.style.display = 'flex';
+            document.getElementById('winnerName').textContent = `Winner: Architect ${evt.winner}`;
+          }
+
+          // Render diagram
+          if (evt.xml) {
+            renderDiagram(evt.xml);
+            downloadBtn.disabled = false;
+          }
+
+          // Store all proposals for comparison
+          allProposals = evt.all_proposals || [];
+          if (allProposals.length > 1) {
+            compareBtn.disabled = false;
+          }
+          break;
+
+        case 'error':
+          alert('Error: ' + evt.message);
+          break;
+
+        // Handle single-agent mode events
+        case 'iteration':
+          setPhase('&#x1F504;', `Iteration ${evt.iteration}`, 'Designing architecture...');
+          setAgentActive('alpha');
+          break;
+
+        case 'plan':
+          setAgentDone('alpha', `Created plan with ${evt.data?.nodes?.length || 0} components`);
+          break;
+
+        case 'verify':
+          if (evt.ok) {
+            setAgentDone('chief', 'Validation passed');
+          }
+          break;
+      }
+    }
+
+    function handlePhase(evt) {
+      const phaseMap = {
+        'chief_planning': { icon: '&#x1F4CB;', title: 'Chief Architect Planning', agent: 'chief', step: 'criteria' },
+        'team_design': { icon: '&#x1F477;', title: 'Team Designing', step: 'design' },
+        'peer_review': { icon: '&#x1F50D;', title: 'Peer Review', step: 'review' },
+        'chief_scoring': { icon: '&#x1F3AF;', title: 'Scoring & Selection', agent: 'chief', step: 'scoring' },
+        'refinement': { icon: '&#x2728;', title: 'Refining Design', step: 'refine' },
+        'complete': { icon: '&#x2705;', title: 'Complete!', step: 'done' }
+      };
+
+      const config = phaseMap[evt.phase];
+      if (config) {
+        setPhase(config.icon, config.title, evt.message || '');
+        if (config.step) setProgress(config.step);
+        if (config.agent) setAgentActive(config.agent);
+      }
+    }
+
+    // Download
+    downloadBtn.addEventListener('click', () => {
+      if (!latestXML) return;
+      const blob = new Blob([latestXML], { type: 'application/xml' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'architecture.drawio';
+      a.click();
+    });
+
+    // Compare (show all proposals)
+    compareBtn.addEventListener('click', () => {
+      if (allProposals.length < 2) return;
+
+      const list = allProposals.map((p, i) =>
+        `${i+1}. Architect ${p.architect} - Score: ${p.score?.toFixed(1) || 'N/A'}\n   ${p.rationale?.slice(0, 100)}...`
+      ).join('\n\n');
+
+      alert('All Proposals:\n\n' + list);
+    });
+  </script>
+</body>
+</html>
