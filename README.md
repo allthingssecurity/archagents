@@ -228,7 +228,7 @@ Built with FastAPI, OpenAI, and vanilla JavaScript.
 
 - Architecture (Scalable Audio Streaming on AWS)
 
-![Architecture](arch.svg)
+![Architecture](audio.png)
 
 ## Scenario: Scalable Audio Streaming on AWS
 
