@@ -99,6 +99,33 @@ http://127.0.0.1:8000
 3. Click **"Generate Architecture"**
 4. The single agent iteratively designs and validates
 
+### MCP Live Mode (NEW!)
+
+Build diagrams directly in Draw.io in real-time using the [drawio-mcp-server](https://github.com/lgazo/drawio-mcp-server).
+
+#### Prerequisites for MCP Mode
+
+1. **Install and run the MCP server:**
+```bash
+npx -y drawio-mcp-server --transport http --http-port 3000
+```
+
+2. **Install the Draw.io browser extension:**
+   - Visit [Draw.io MCP Extension](https://github.com/lgazo/drawio-mcp-extension)
+   - Install in Chrome/Firefox
+
+3. **Open Draw.io in your browser:**
+   - Go to [app.diagrams.net](https://app.diagrams.net)
+   - Create a new diagram
+   - Ensure the extension is connected (you'll see a status indicator)
+
+4. **Use MCP Live mode:**
+   - Toggle to "🎨 MCP Live" in the ArchGen Studio
+   - The MCP status indicator should show "Connected"
+   - Enter your architecture goal
+   - Click **"Build in Draw.io"**
+   - Watch the diagram being built live in your Draw.io tab!
+
 ### Example Prompts
 
 ```
@@ -108,9 +135,18 @@ payment processing, and global CDN deployment on AWS
 Design a healthcare data platform with HIPAA compliance, real-time
 patient monitoring, and integration with EHR systems
 
-Design a fintech trading platform with low-latency order execution,
-real-time market data, and regulatory compliance
+Design a data layer with PostgreSQL, Redis cache, and object storage 
+for files, plus message queue for async workflows. Add observability 
+(centralized logs, metrics, tracing), CI/CD pipeline, and secrets 
+management. Show network/security boundaries (VPC, private subnets, 
+WAF, TLS) and label key request + async event flows.
 ```
+
+### Example Output
+
+![Example Architecture](docs/example_architecture.png)
+
+*A clean architecture diagram showing data layer with PostgreSQL, Redis, Object Storage, Message Queue, and Observability components with clear data flow arrows.*
 
 ## Project Structure
 
@@ -120,6 +156,8 @@ archgen/
 ├── server.py             # FastAPI server with endpoints
 ├── agent.py              # Single-agent architecture generation
 ├── multi_agent.py        # Multi-agent team orchestration
+├── mcp_client.py         # Draw.io MCP server client (NEW!)
+├── mcp_agent.py          # MCP-enabled architecture agent (NEW!)
 ├── plan_to_drawio.py     # Plan → Draw.io XML conversion
 ├── render.py             # XML → SVG rendering
 ├── validate.py           # Architecture validation
@@ -139,6 +177,11 @@ archgen/
 | `/api/multi_agent_stream` | POST | Multi-agent team generation |
 | `/api/clarify` | POST | Get clarifying questions |
 | `/api/export` | POST | Export XML to SVG/PNG |
+| `/api/mcp/status` | GET | Check MCP server connection status |
+| `/api/mcp/generate_stream` | POST | Generate architecture via MCP (live in Draw.io) |
+| `/api/mcp/call_tool` | POST | Directly invoke an MCP tool |
+| `/api/mcp/build_diagram` | POST | Build a diagram from a plan via MCP |
+| `/api/mcp/tools` | GET | List available MCP tools |
 
 ## Configuration
 
@@ -150,6 +193,7 @@ Environment variables:
 | `ARCHGEN_OPENAI_MODEL` | Model to use | `gpt-4o-mini` |
 | `HOST` | Server host | `127.0.0.1` |
 | `PORT` | Server port | `8000` |
+| `DRAWIO_MCP_URL` | Draw.io MCP server URL | `http://localhost:3000` |
 
 ## Architecture Layers
 

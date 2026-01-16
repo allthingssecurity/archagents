@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ArchGen - Multi-Agent Architecture Studio</title>
   <style>
     :root {
@@ -24,7 +25,11 @@
       --gamma: #f59e0b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -66,6 +71,7 @@
       font-weight: 700;
       background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -78,6 +84,7 @@
     .mode-toggle {
       display: flex;
       gap: 8px;
+      align-items: center;
     }
 
     .mode-btn {
@@ -101,6 +108,46 @@
       background: var(--accent);
       border-color: var(--accent);
       color: white;
+    }
+
+    .mode-btn.mcp-mode {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-color: #10b981;
+    }
+
+    .mcp-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--bg-card);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .mcp-status.connected {
+      color: var(--success);
+    }
+
+    .mcp-status.disconnected {
+      color: var(--error);
+    }
+
+    .mcp-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .mcp-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .mcp-dot.disconnected {
+      background: var(--error);
     }
 
     /* Main Layout */
@@ -290,10 +337,21 @@
       color: white;
     }
 
-    .agent-avatar.chief { background: linear-gradient(135deg, var(--chief) 0%, #a855f7 100%); }
-    .agent-avatar.alpha { background: linear-gradient(135deg, var(--alpha) 0%, #0ea5e9 100%); }
-    .agent-avatar.beta { background: linear-gradient(135deg, var(--beta) 0%, #14b8a6 100%); }
-    .agent-avatar.gamma { background: linear-gradient(135deg, var(--gamma) 0%, #f97316 100%); }
+    .agent-avatar.chief {
+      background: linear-gradient(135deg, var(--chief) 0%, #a855f7 100%);
+    }
+
+    .agent-avatar.alpha {
+      background: linear-gradient(135deg, var(--alpha) 0%, #0ea5e9 100%);
+    }
+
+    .agent-avatar.beta {
+      background: linear-gradient(135deg, var(--beta) 0%, #14b8a6 100%);
+    }
+
+    .agent-avatar.gamma {
+      background: linear-gradient(135deg, var(--gamma) 0%, #f97316 100%);
+    }
 
     .agent-info h4 {
       font-size: 14px;
@@ -330,8 +388,17 @@
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.2); }
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+      }
     }
 
     .agent-body {
@@ -410,8 +477,13 @@
     }
 
     @keyframes progress {
-      0% { background-position: -100% 0; }
-      100% { background-position: 100% 0; }
+      0% {
+        background-position: -100% 0;
+      }
+
+      100% {
+        background-position: 100% 0;
+      }
     }
 
     /* Review Card */
@@ -444,8 +516,13 @@
       margin: 2px 0;
     }
 
-    .review-points .strength { color: var(--success); }
-    .review-points .weakness { color: var(--warning); }
+    .review-points .strength {
+      color: var(--success);
+    }
+
+    .review-points .weakness {
+      color: var(--warning);
+    }
 
     /* Proposals Grid */
     .proposals-grid {
@@ -483,9 +560,18 @@
     }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg-dark); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
 
     /* Actions */
     .actions {
@@ -545,10 +631,13 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
+
 <body>
   <header class="header">
     <div class="logo">
@@ -561,6 +650,11 @@
     <div class="mode-toggle">
       <button class="mode-btn" id="singleMode">Single Agent</button>
       <button class="mode-btn active" id="multiMode">Team Mode</button>
+      <button class="mode-btn" id="mcpMode">🎨 MCP Live</button>
+      <div class="mcp-status disconnected" id="mcpStatus">
+        <span class="mcp-dot" id="mcpDot"></span>
+        <span id="mcpStatusText">MCP: Checking...</span>
+      </div>
     </div>
   </header>
 
@@ -573,17 +667,19 @@
       <div class="panel-content">
         <div class="input-group">
           <label class="input-label">Architecture Goal</label>
-          <textarea id="prompt" placeholder="Describe your architecture...&#10;&#10;Example: Design an e-commerce platform with microservices, real-time inventory, payment processing, and global CDN deployment on AWS"></textarea>
+          <textarea id="prompt"
+            placeholder="Describe your architecture...&#10;&#10;Example: Design an e-commerce platform with microservices, real-time inventory, payment processing, and global CDN deployment on AWS"></textarea>
         </div>
 
         <div class="input-group">
           <label class="input-label">Context & Constraints</label>
-          <textarea id="context" style="min-height: 80px;" placeholder="Requirements, budget, team size, existing systems..."></textarea>
+          <textarea id="context" style="min-height: 80px;"
+            placeholder="Requirements, budget, team size, existing systems..."></textarea>
         </div>
 
         <button id="generate" class="btn btn-primary">
-          <span>&#x1F680;</span>
-          Launch Architecture Team
+          <span id="generateIcon">&#x1F680;</span>
+          <span id="generateText">Launch Architecture Team</span>
         </button>
 
         <div class="actions">
@@ -725,20 +821,83 @@
     let latestXML = '';
     let allProposals = [];
     let isMultiMode = true;
+    let isMcpMode = false;
+    let mcpConnected = false;
 
-    // Mode toggle
-    document.getElementById('singleMode').addEventListener('click', () => {
-      isMultiMode = false;
-      document.getElementById('singleMode').classList.add('active');
-      document.getElementById('multiMode').classList.remove('active');
-      generateBtn.innerHTML = '<span>&#x26A1;</span> Generate Architecture';
-    });
+    // Check MCP status on load
+    async function checkMcpStatus() {
+      const statusEl = document.getElementById('mcpStatus');
+      const dotEl = document.getElementById('mcpDot');
+      const textEl = document.getElementById('mcpStatusText');
 
-    document.getElementById('multiMode').addEventListener('click', () => {
-      isMultiMode = true;
-      document.getElementById('multiMode').classList.add('active');
-      document.getElementById('singleMode').classList.remove('active');
-      generateBtn.innerHTML = '<span>&#x1F680;</span> Launch Architecture Team';
+      try {
+        const resp = await fetch('/api/mcp/status');
+        const data = await resp.json();
+
+        mcpConnected = data.healthy === true;
+
+        if (mcpConnected) {
+          statusEl.className = 'mcp-status connected';
+          dotEl.className = 'mcp-dot connected';
+          textEl.textContent = 'MCP: Connected';
+        } else {
+          statusEl.className = 'mcp-status disconnected';
+          dotEl.className = 'mcp-dot disconnected';
+          textEl.textContent = 'MCP: Offline';
+        }
+      } catch (e) {
+        statusEl.className = 'mcp-status disconnected';
+        dotEl.className = 'mcp-dot disconnected';
+        textEl.textContent = 'MCP: Error';
+      }
+    }
+
+    // Check MCP status on load and periodically
+    checkMcpStatus();
+    setInterval(checkMcpStatus, 30000);
+
+    // Mode toggle functions
+    function setModeButtons(mode) {
+      ['singleMode', 'multiMode', 'mcpMode'].forEach(id => {
+        document.getElementById(id).classList.remove('active', 'mcp-mode');
+      });
+
+      const iconEl = document.getElementById('generateIcon');
+      const textEl = document.getElementById('generateText');
+
+      switch (mode) {
+        case 'single':
+          isMultiMode = false;
+          isMcpMode = false;
+          document.getElementById('singleMode').classList.add('active');
+          iconEl.innerHTML = '&#x26A1;';
+          textEl.textContent = 'Generate Architecture';
+          break;
+        case 'multi':
+          isMultiMode = true;
+          isMcpMode = false;
+          document.getElementById('multiMode').classList.add('active');
+          iconEl.innerHTML = '&#x1F680;';
+          textEl.textContent = 'Launch Architecture Team';
+          break;
+        case 'mcp':
+          isMultiMode = false;
+          isMcpMode = true;
+          document.getElementById('mcpMode').classList.add('active', 'mcp-mode');
+          iconEl.innerHTML = '&#x1F3A8;';
+          textEl.textContent = 'Build in Draw.io';
+          break;
+      }
+    }
+
+    document.getElementById('singleMode').addEventListener('click', () => setModeButtons('single'));
+    document.getElementById('multiMode').addEventListener('click', () => setModeButtons('multi'));
+    document.getElementById('mcpMode').addEventListener('click', () => {
+      if (!mcpConnected) {
+        alert('MCP Server not connected!\\n\\nTo use MCP Live mode:\\n1. Run: npx -y drawio-mcp-server --transport http --http-port 3000\\n2. Install Draw.io browser extension\\n3. Open draw.io and connect extension');
+        return;
+      }
+      setModeButtons('mcp');
     });
 
     function resetUI() {
@@ -795,7 +954,7 @@
       try {
         const res = await fetch('/api/export', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ xml, format: 'svg', scale: 1 })
         });
         const data = await res.json();
@@ -822,15 +981,33 @@
       compareBtn.disabled = true;
       resetUI();
 
-      viewer.innerHTML = '<div class="viewer-placeholder"><div class="spinner"></div><p>Team is working...</p></div>';
+      // Different loading message based on mode
+      if (isMcpMode) {
+        viewer.innerHTML = '<div class=\"viewer-placeholder\"><div class=\"spinner\"></div><p>Building diagram in Draw.io...</p><small style=\"color: #64748b;\">Check your Draw.io tab to see the diagram being built live!</small></div>';
+      } else {
+        viewer.innerHTML = '<div class=\"viewer-placeholder\"><div class=\"spinner\"></div><p>Team is working...</p></div>';
+      }
 
-      const endpoint = isMultiMode ? '/api/multi_agent_stream' : '/api/generate_stream';
+      // Select endpoint based on mode
+      let endpoint;
+      let body;
+
+      if (isMcpMode) {
+        endpoint = '/api/mcp/generate_stream';
+        body = JSON.stringify({ prompt, context: context || null, use_mcp: true });
+      } else if (isMultiMode) {
+        endpoint = '/api/multi_agent_stream';
+        body = JSON.stringify({ prompt, context: context || null, max_iters: 3 });
+      } else {
+        endpoint = '/api/generate_stream';
+        body = JSON.stringify({ prompt, context: context || null, max_iters: 3 });
+      }
 
       try {
         const resp = await fetch(endpoint, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ prompt, context: context || null, max_iters: 3 })
+          headers: { 'Content-Type': 'application/json' },
+          body
         });
 
         const reader = resp.body.getReader();
@@ -838,10 +1015,10 @@
         let buffer = '';
 
         while (true) {
-          const {value, done} = await reader.read();
+          const { value, done } = await reader.read();
           if (done) break;
 
-          buffer += decoder.decode(value, {stream: true});
+          buffer += decoder.decode(value, { stream: true });
           const parts = buffer.split('\n\n');
           buffer = parts.pop() || '';
 
@@ -974,17 +1151,80 @@
             setAgentDone('chief', 'Validation passed');
           }
           break;
+
+        // MCP-specific events
+        case 'connection_check':
+          if (evt.healthy) {
+            setPhase('&#x2705;', 'MCP Connected', evt.message || 'Connected to Draw.io');
+          } else {
+            setPhase('&#x274C;', 'MCP Error', evt.message || 'Connection failed');
+            viewer.innerHTML = '<div class="viewer-placeholder"><p style="color: var(--error);">MCP Connection Failed</p><small>' + (evt.message || 'Check if MCP server is running') + '</small></div>';
+          }
+          break;
+
+        case 'node_created':
+          setPhase('&#x1F4E6;', 'Adding Components', `Created: ${evt.name || evt.node_id}`);
+          break;
+
+        case 'edge_created':
+          setPhase('&#x1F517;', 'Connecting', `${evt.from} → ${evt.to}${evt.label ? ': ' + evt.label : ''}`);
+          break;
+
+        case 'lane_created':
+          setPhase('&#x1F3D7;', 'Building Layers', `Layer: ${evt.lane}`);
+          break;
+
+        case 'reasoning':
+          // Show reasoning in phase indicator
+          setPhase('&#x1F4AD;', 'AI Reasoning', evt.content?.slice(0, 150) + '...');
+          break;
+
+        case 'warning':
+          console.warn('MCP Warning:', evt.message);
+          break;
+
+        case 'complete':
+          setPhase('&#x2705;', 'Complete!', evt.message || 'Diagram built in Draw.io!');
+
+          // Complete all progress steps
+          document.querySelectorAll('.progress-step').forEach(s => {
+            s.classList.remove('active');
+            s.classList.add('complete');
+          });
+
+          // For MCP mode, show success message in viewer
+          if (isMcpMode) {
+            viewer.innerHTML = `<div class="viewer-placeholder">
+              <div class="icon" style="font-size: 64px;">&#x2705;</div>
+              <h3 style="color: var(--success); margin-top: 16px;">Diagram Built in Draw.io!</h3>
+              <p style="color: var(--text-dim); margin-top: 8px;">Check your Draw.io browser tab to see and edit the architecture diagram.</p>
+              <button onclick="window.open('https://app.diagrams.net', '_blank')" 
+                style="margin-top: 16px; padding: 10px 20px; background: var(--success); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">
+                Open Draw.io
+              </button>
+            </div>`;
+          }
+          break;
       }
     }
 
     function handlePhase(evt) {
       const phaseMap = {
+        // Multi-agent mode phases
         'chief_planning': { icon: '&#x1F4CB;', title: 'Chief Architect Planning', agent: 'chief', step: 'criteria' },
         'team_design': { icon: '&#x1F477;', title: 'Team Designing', step: 'design' },
         'peer_review': { icon: '&#x1F50D;', title: 'Peer Review', step: 'review' },
         'chief_scoring': { icon: '&#x1F3AF;', title: 'Scoring & Selection', agent: 'chief', step: 'scoring' },
         'refinement': { icon: '&#x2728;', title: 'Refining Design', step: 'refine' },
-        'complete': { icon: '&#x2705;', title: 'Complete!', step: 'done' }
+        'complete': { icon: '&#x2705;', title: 'Complete!', step: 'done' },
+
+        // MCP mode phases
+        'init': { icon: '&#x1F50C;', title: 'Connecting to MCP', step: 'criteria' },
+        'analyze': { icon: '&#x1F50D;', title: 'Analyzing Requirements', step: 'design' },
+        'design': { icon: '&#x1F4DD;', title: 'Designing Architecture', step: 'design' },
+        'build': { icon: '&#x1F3D7;', title: 'Building in Draw.io', step: 'review' },
+        'synthesize': { icon: '&#x2699;', title: 'Generating Diagram', step: 'scoring' },
+        'validate': { icon: '&#x2705;', title: 'Validating', step: 'refine' }
       };
 
       const config = phaseMap[evt.phase];
@@ -992,6 +1232,9 @@
         setPhase(config.icon, config.title, evt.message || '');
         if (config.step) setProgress(config.step);
         if (config.agent) setAgentActive(config.agent);
+      } else if (evt.message) {
+        // Fallback for unmapped phases - just show the message
+        setPhase('&#x1F4AC;', evt.phase || 'Working', evt.message);
       }
     }
 
@@ -1010,11 +1253,12 @@
       if (allProposals.length < 2) return;
 
       const list = allProposals.map((p, i) =>
-        `${i+1}. Architect ${p.architect} - Score: ${p.score?.toFixed(1) || 'N/A'}\n   ${p.rationale?.slice(0, 100)}...`
+        `${i + 1}. Architect ${p.architect} - Score: ${p.score?.toFixed(1) || 'N/A'}\n   ${p.rationale?.slice(0, 100)}...`
       ).join('\n\n');
 
       alert('All Proposals:\n\n' + list);
     });
   </script>
 </body>
+
 </html>

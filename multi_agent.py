@@ -19,8 +19,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from .plan_to_drawio import plan_to_mxgraph
-from .validate import validate_xml
+from plan_to_drawio import plan_to_mxgraph
+from validate import validate_xml
 
 
 # =============================================================================

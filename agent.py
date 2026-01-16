@@ -19,88 +19,89 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import json
 
-from .plan_to_drawio import plan_to_mxgraph
-from .validate import validate_xml
-
+from plan_to_drawio import plan_to_mxgraph, plans_to_mxgraph
+from validate import validate_xml
 
 # =============================================================================
-# SYSTEM PROMPTS - Enhanced for compelling architecture diagrams
+# SYSTEM PROMPTS - Simple and focused
 # =============================================================================
 
-ARCHITECT_PERSONA = """You are a world-class enterprise solution architect with 20+ years of experience designing mission-critical systems. You think systematically about:
+ARCHITECT_PERSONA = """You are an expert at creating SIMPLE, CLEAN architecture diagrams.
 
-1. **Layered Architecture**: Clear separation of concerns across presentation, business logic, integration, data, and infrastructure layers
-2. **Integration Patterns**: Event-driven, API-first, message queues, service mesh
-3. **Security by Design**: Zero-trust, identity management, encryption at rest/transit
-4. **Scalability**: Horizontal scaling, caching strategies, database sharding
-5. **Resilience**: Circuit breakers, retry policies, graceful degradation
-6. **Observability**: Logging, metrics, tracing, alerting
+CRITICAL RULES:
+- Maximum 6 nodes (components)
+- Short names (under 15 characters)
+- Clear top-to-bottom data flow
+- Edge labels: 1-2 words only
+- Focus on MAIN components only"""
 
-When designing architectures, you:
-- Start with business requirements and work down to technical implementation
-- Consider both functional and non-functional requirements
-- Design for change - systems evolve over time
-- Balance complexity with maintainability
-- Document key decisions and trade-offs"""
+ARCHITECTURE_GUIDE = """
+## Simple Architecture Format
 
-SAP_ARCHITECTURE_GUIDE = """
-## Architecture Layer Convention
+Just create nodes and edges. Keep it SIMPLE.
 
-| Layer | Purpose | Color | Components |
-|-------|---------|-------|------------|
-| Experience | User interfaces, portals, mobile apps | #0a6ed1 (Blue) | Fiori, Mobile, Portal, External UIs |
-| Application | Business logic, core applications | #1a9898 (Teal) | S/4HANA, ECC, SuccessFactors, Ariba |
-| Integration | APIs, events, orchestration | #f39c12 (Orange) | Integration Suite, API Mgmt, Event Mesh |
-| Data | Storage, analytics, lakes | #6c5ce7 (Purple) | HANA, Data Lake, BW/4HANA, Analytics |
-| Platform & Security | Infrastructure, identity, security | #2c3e50 (Dark) | BTP, IAS, XSUAA, Cloud Connector |
-| External | Third-party systems | #95a5a6 (Gray) | CRM, Legacy, Partner Systems |
+Node Types:
+- process: Services, apps, functions
+- data: Databases, storage, caches  
+- network: Load balancers, API gateways
+- security: IAM, auth, firewalls
+- external: Third-party systems
 
-## Diagram Best Practices
-- Group related components (e.g., "BTP Subaccount", "On-Premise", "Partner Zone")
-- Show data flow direction with labeled arrows
-- Use consistent spacing and alignment
-- Include security boundaries where relevant
-- Add a legend for complex diagrams
+Example (max 6 nodes):
+```json
+{
+  "title": "Simple Web App",
+  "nodes": [
+    {"id": "lb", "name": "Load Balancer", "type": "network"},
+    {"id": "app", "name": "App Server", "type": "process"},
+    {"id": "cache", "name": "Redis Cache", "type": "data"},
+    {"id": "db", "name": "Database", "type": "data"}
+  ],
+  "edges": [
+    {"from": "lb", "to": "app", "label": "HTTP"},
+    {"from": "app", "to": "cache", "label": "cache"},
+    {"from": "app", "to": "db", "label": "SQL"}
+  ]
+}
+```
 """
+
+
 
 PLAN_FORMAT = """
 ## Output Format (JSON only)
 
 Return ONLY a JSON object with this structure:
+
 ```json
 {
-  "lanes": ["Experience", "Application", "Integration", "Data", "Platform & Security"],
-  "groups": [
-    {"id": "BTP", "name": "SAP BTP", "lane": "Platform & Security", "style": "dashed"},
-    {"id": "OnPrem", "name": "On-Premise", "lane": "Application", "style": "solid"}
-  ],
+  "title": "Architecture Name",
   "nodes": [
-    {"id": "S4HANA", "name": "SAP S/4HANA", "lane": "Application", "type": "app", "group": "OnPrem"},
-    {"id": "IntSuite", "name": "Integration Suite", "lane": "Integration", "type": "integration", "group": "BTP"},
-    {"id": "CRM", "name": "External CRM", "lane": "Experience", "type": "external", "scope": "external"}
+    {"id": "n1", "name": "Component 1", "type": "process"},
+    {"id": "n2", "name": "Component 2", "type": "data"},
+    {"id": "n3", "name": "Component 3", "type": "network"}
   ],
   "edges": [
-    {"from": "S4HANA", "to": "IntSuite", "label": "OData/REST"},
-    {"from": "IntSuite", "to": "CRM", "label": "Events"}
-  ],
-  "legend": true
+    {"from": "n1", "to": "n2", "label": "calls"},
+    {"from": "n2", "to": "n3"}
+  ]
 }
 ```
 
 ## Node Types
-- `app`: Core application (rounded rectangle)
-- `service`: Microservice/function (rectangle)
-- `integration`: Integration component (rounded)
-- `data`: Database/storage (cylinder)
-- `security`: Security component (shield-like)
-- `external`: External/third-party system (gray)
+- process: Apps, services, functions (lavender)
+- data: Databases, caches, storage (plum)
+- network: Load balancers, gateways (blue)
+- security: Auth, firewall (pink)
+- external: Third-party (yellow)
 
-## Edge Labels (use descriptive labels)
-- Protocol: "REST API", "OData", "SOAP", "GraphQL"
-- Pattern: "Events", "Message Queue", "Sync/Async"
-- Security: "OAuth2/JWT", "mTLS", "API Key"
-- Data: "ETL", "CDC", "Replication"
+## RULES
+- MAX 6 nodes
+- Names under 15 chars
+- Labels under 10 chars
 """
+
+
 
 
 def get_openai_client() -> OpenAI:
@@ -117,7 +118,7 @@ def system_prompt() -> str:
     """Build the full system prompt for the architect agent."""
     return f"""{ARCHITECT_PERSONA}
 
-{SAP_ARCHITECTURE_GUIDE}
+{ARCHITECTURE_GUIDE}
 
 {PLAN_FORMAT}
 
@@ -228,90 +229,109 @@ def parse_plan_json(raw: str) -> Dict[str, Any]:
 
     raise ValueError("Could not parse PLAN JSON from LLM output")
 
-
 def normalize_plan(user_goal: str, plan: Dict[str, Any]) -> Dict[str, Any]:
-    """Normalize and enhance the architecture plan with best practices."""
+    """
+    Normalize and SIMPLIFY the architecture plan.
+    Key actions:
+    - Limit nodes to MAX 8
+    - Convert VPC/Subnet/Cluster nodes to groups
+    - Truncate long names
+    - Remove duplicate edges
+    """
     g = plan.copy()
-    goal_lower = user_goal.lower()
-
-    # Ensure standard lanes
-    default_lanes = ["Experience", "Application", "Integration", "Data", "Platform & Security"]
-    g["lanes"] = g.get("lanes") or default_lanes
-
-    # Normalize groups
-    groups = {grp.get("id"): grp for grp in (g.get("groups") or []) if grp.get("id")}
-
-    def ensure_group(gid: str, name: str, lane: str, style: str = "dashed"):
-        if gid not in groups:
-            groups[gid] = {"id": gid, "name": name, "lane": lane, "style": style}
-
-    # Add contextual groups based on goal
-    ensure_group("BTP", "SAP BTP", "Platform & Security")
-    if any(kw in goal_lower for kw in ["hybrid", "on-prem", "on premise"]):
-        ensure_group("OnPrem", "On-Premise", "Application", "solid")
-    if any(kw in goal_lower for kw in ["security", "secure", "zero trust"]):
-        ensure_group("SecurityZone", "Security Boundary", "Platform & Security")
-    if any(kw in goal_lower for kw in ["partner", "third party", "external"]):
-        ensure_group("PartnerZone", "Partner Integration Zone", "Integration")
-
-    g["groups"] = list(groups.values())
-
-    # Normalize nodes
-    nodes = {n.get("id"): n for n in (g.get("nodes") or []) if n.get("id")}
-
-    def ensure_node(nid: str, name: str, lane: str, ntype: str, group: Optional[str] = None, scope: Optional[str] = None):
-        if nid not in nodes:
-            n = {"id": nid, "name": name, "lane": lane, "type": ntype}
-            if group:
-                n["group"] = group
-            if scope:
-                n["scope"] = scope
-            nodes[nid] = n
-
-    # Add contextual components
-    if any(kw in goal_lower for kw in ["event", "async", "message"]):
-        ensure_node("EventMesh", "Event Mesh", "Integration", "integration", group="BTP")
-    if any(kw in goal_lower for kw in ["api", "rest", "gateway"]):
-        ensure_node("APIM", "API Management", "Integration", "integration", group="BTP")
-    if "monitor" in goal_lower:
-        ensure_node("Monitoring", "Cloud ALM", "Platform & Security", "service", group="BTP")
-
-    # Correct lane assignments for known components
-    lane_corrections = {
-        "IntegrationSuite": ("Integration", "BTP"),
-        "Integration Suite": ("Integration", "BTP"),
-        "IAS": ("Platform & Security", "BTP"),
-        "XSUAA": ("Platform & Security", "BTP"),
-        "CloudConnector": ("Platform & Security", "BTP"),
-    }
-
-    for nid, (lane, group) in lane_corrections.items():
-        if nodes.get(nid):
-            nodes[nid]["lane"] = lane
-            nodes[nid]["group"] = nodes[nid].get("group") or group
-
-    g["nodes"] = list(nodes.values())
-
-    # Normalize edges
-    edges = list(g.get("edges") or [])
-    edge_set = {(e.get("from"), e.get("to"), e.get("label", "")) for e in edges}
-
-    def add_edge(src: str, tgt: str, label: str):
-        if (src, tgt, label) not in edge_set and src in nodes and tgt in nodes:
-            edges.append({"from": src, "to": tgt, "label": label})
-            edge_set.add((src, tgt, label))
-
-    # Add common integration patterns
-    if nodes.get("IAS"):
-        for nid in nodes:
-            if nodes[nid].get("type") in ("app", "service") and nid != "IAS":
-                add_edge("IAS", nid, "OAuth2/SAML")
-                break  # Only add one example
-
-    g["edges"] = edges
-    g["legend"] = g.get("legend", True)
-
+    
+    # Ensure title
+    if not g.get("title"):
+        g["title"] = user_goal[:50] + ("..." if len(user_goal) > 50 else "")
+    
+    # Ensure lists exist
+    g["nodes"] = g.get("nodes") or []
+    g["edges"] = g.get("edges") or []
+    g["groups"] = list(g.get("groups") or [])
+    
+    # Keywords that indicate infrastructure containers (should be groups, not nodes)
+    CONTAINER_KEYWORDS = [
+        "vpc", "subnet", "cluster", "network", "region", "zone",
+        "namespace", "environment", "boundary", "perimeter"
+    ]
+    
+    # Convert container nodes to groups
+    nodes_to_remove = []
+    for node in g["nodes"]:
+        name_lower = node.get("name", "").lower()
+        id_lower = node.get("id", "").lower()
+        
+        # Check if this node should be a group
+        is_container = any(kw in name_lower or kw in id_lower for kw in CONTAINER_KEYWORDS)
+        
+        if is_container:
+            # Convert to group
+            new_group = {
+                "id": node.get("id"),
+                "name": node.get("name", node.get("id"))
+            }
+            # Check if this group already exists
+            existing_ids = {grp.get("id") for grp in g["groups"]}
+            if new_group["id"] not in existing_ids:
+                g["groups"].append(new_group)
+            nodes_to_remove.append(node)
+    
+    # Remove converted nodes
+    for node in nodes_to_remove:
+        g["nodes"].remove(node)
+    
+    # Remove edges that reference removed nodes
+    node_ids = {n.get("id") for n in g["nodes"]}
+    g["edges"] = [
+        e for e in g["edges"]
+        if e.get("from") in node_ids and e.get("to") in node_ids
+    ]
+    
+    # LIMIT nodes to max 8 (keep first 8 for simplicity)
+    MAX_NODES = 8
+    if len(g["nodes"]) > MAX_NODES:
+        # Keep nodes that have the most connections
+        node_connection_count = {}
+        for node in g["nodes"]:
+            nid = node.get("id")
+            count = sum(1 for e in g["edges"] if e.get("from") == nid or e.get("to") == nid)
+            node_connection_count[nid] = count
+        
+        # Sort by connection count (most connected first)
+        sorted_nodes = sorted(g["nodes"], key=lambda n: node_connection_count.get(n.get("id"), 0), reverse=True)
+        g["nodes"] = sorted_nodes[:MAX_NODES]
+        
+        # Clean edges again
+        node_ids = {n.get("id") for n in g["nodes"]}
+        g["edges"] = [
+            e for e in g["edges"]
+            if e.get("from") in node_ids and e.get("to") in node_ids
+        ]
+    
+    # Truncate long node names
+    for node in g["nodes"]:
+        name = node.get("name", node.get("id", ""))
+        if len(name) > 20:
+            node["name"] = name[:17] + "..."
+    
+    # Remove duplicate edges
+    seen_edges = set()
+    unique_edges = []
+    for e in g["edges"]:
+        edge_key = (e.get("from"), e.get("to"))
+        if edge_key not in seen_edges:
+            seen_edges.add(edge_key)
+            unique_edges.append(e)
+    g["edges"] = unique_edges
+    
+    # Truncate edge labels
+    for edge in g["edges"]:
+        label = edge.get("label", "")
+        if len(label) > 15:
+            edge["label"] = label[:12] + "..."
+    
     return g
+
 
 
 def call_model(client: OpenAI, messages: List[Dict[str, str]], model: Optional[str] = None) -> str:
@@ -624,3 +644,159 @@ def agentic_generate_stream(user_goal: str, context_data: Optional[str] = None, 
             "content": "Completed maximum iterations. Returning best effort architecture."
         }
         yield {"type": "final", "xml": xml_text}
+
+
+# =============================================================================
+# MULTI-PROPOSAL GENERATION (Recommendation System)
+# =============================================================================
+
+PROPOSAL_VARIANTS = [
+    {
+        "name": "Option 1: Standard",
+        "instruction": "Design a balanced, standard enterprise architecture focusing on proven patterns and maintainability.",
+        "focus": "balanced"
+    },
+    {
+        "name": "Option 2: Event-Driven",
+        "instruction": "Design an event-driven, loosely-coupled architecture emphasizing async communication, event mesh, and real-time data flows.",
+        "focus": "event-driven"
+    },
+    {
+        "name": "Option 3: Security-First",
+        "instruction": "Design a security-first architecture with zero-trust principles, strong identity management, and defense in depth.",
+        "focus": "security"
+    }
+]
+
+
+def generate_multi_proposals(
+    user_goal: str, 
+    context_data: Optional[str] = None, 
+    model: Optional[str] = None
+) -> Generator[Dict[str, Any], None, None]:
+    """
+    Generate 3 different architecture proposals for recommendation.
+    
+    Yields events:
+    - phase: Current generation phase
+    - proposal: Individual proposal data
+    - final: Combined XML with all 3 proposals side-by-side
+    """
+    client = get_openai_client()
+    proposals: List[Dict[str, Any]] = []
+    
+    yield {
+        "type": "phase",
+        "phase": "multi_proposal",
+        "reasoning": f"Generating 3 architecture recommendations for: \"{user_goal[:100]}...\""
+    }
+    
+    # Generate each proposal variant
+    for idx, variant in enumerate(PROPOSAL_VARIANTS):
+        yield {
+            "type": "phase",
+            "phase": "generating",
+            "reasoning": f"Creating {variant['name']}...",
+            "proposal_index": idx
+        }
+        
+        t0 = time.time()
+        
+        # Build variant-specific prompt
+        variant_prompt = f"""Design an architecture for: {user_goal}
+
+{variant['instruction']}
+
+Key focus areas for this variant:
+{"- Proven patterns, standard integrations, maintainable design" if variant['focus'] == 'balanced' else ""}
+{"- Event Mesh, async messaging, loosely-coupled services, CQRS patterns" if variant['focus'] == 'event-driven' else ""}
+{"- Zero-trust, Identity Access, encryption, security boundaries, audit logging" if variant['focus'] == 'security' else ""}
+
+Return ONLY a JSON plan with lanes, groups, nodes, and edges."""
+        
+        msgs = [
+            {"role": "system", "content": system_prompt()},
+            {"role": "user", "content": variant_prompt},
+        ]
+        if context_data:
+            msgs.append({"role": "user", "content": f"Context: {context_data}"})
+        
+        raw_plan = call_model(client, msgs, model=model)
+        
+        try:
+            plan = parse_plan_json(raw_plan)
+            plan = normalize_plan(user_goal, plan)
+            plan["title"] = variant["name"]
+            
+            proposals.append(plan)
+            
+            duration_sec = round(time.time() - t0, 2)
+            
+            yield {
+                "type": "proposal",
+                "index": idx,
+                "name": variant["name"],
+                "plan": plan,
+                "node_count": len(plan.get("nodes", [])),
+                "edge_count": len(plan.get("edges", [])),
+                "duration_sec": duration_sec
+            }
+            
+        except Exception as e:
+            yield {
+                "type": "proposal_error",
+                "index": idx,
+                "name": variant["name"],
+                "error": str(e)
+            }
+            # Add empty placeholder
+            proposals.append({
+                "title": variant["name"],
+                "lanes": ["Experience", "Application", "Integration", "Data", "Platform & Security"],
+                "nodes": [{"id": "placeholder", "name": "Error generating", "lane": "Application", "type": "app"}],
+                "edges": [],
+                "groups": []
+            })
+    
+    # Generate combined XML
+    yield {
+        "type": "phase",
+        "phase": "synthesize",
+        "reasoning": "Combining 3 proposals into side-by-side comparison layout..."
+    }
+    
+    combined_xml = plans_to_mxgraph(proposals)
+    
+    yield {
+        "type": "phase",
+        "phase": "complete",
+        "reasoning": f"Generated {len(proposals)} architecture recommendations."
+    }
+    
+    yield {
+        "type": "final",
+        "xml": combined_xml,
+        "proposal_count": len(proposals)
+    }
+
+
+def agentic_generate_recommendations(
+    user_goal: str, 
+    context_data: Optional[str] = None, 
+    model: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Synchronous version: Generate 3 architecture recommendations.
+    
+    Returns: {"xml": str, "proposals": List[Dict]}
+    """
+    proposals = []
+    xml = ""
+    
+    for event in generate_multi_proposals(user_goal, context_data, model):
+        if event.get("type") == "proposal":
+            proposals.append(event.get("plan"))
+        elif event.get("type") == "final":
+            xml = event.get("xml", "")
+    
+    return {"xml": xml, "proposals": proposals}
